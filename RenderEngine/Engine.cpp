@@ -1,7 +1,19 @@
 #include "Engine.h"
 
-Engine::Engine()
+Engine::Engine(): m_graphics()
 {
+}
+
+BOOL Engine::Initialize(std::string windowTitle, std::string windowClass, int width, int height)
+{
+	if (!WindowWraper::Initialize(windowTitle, windowClass, width, height))
+	{
+		return false;
+	}
+
+	if (!m_graphics.Initialize()) {
+		return false;
+	}
 }
 
 LRESULT Engine::HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -21,7 +33,6 @@ LRESULT Engine::HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 void Engine::EngineLoop()
 {
-
 	while (this->m_running) {
 		MSG msg = { };
 		if (GetMessage(&msg, NULL, 0, 0))
