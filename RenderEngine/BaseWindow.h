@@ -24,9 +24,9 @@ public:
     BOOL Create(WindowWraper *windowWrapter, std::string windowTitle, std::string windowClass, int width, int height);
 
     HWND GetHwnd();
-
-protected:
     HWND m_hwnd;
+protected:
+    
 };
 
 class WindowWraper {
@@ -39,6 +39,9 @@ public:
     BaseWindow m_baseWindow;
 
     WindowWraper();
+
+    UINT getWindowWidth();
+    UINT getWindowHeigth();
 
     virtual BOOL Initialize(std::string windowTitle, std::string windowClass, int width, int height);
     virtual LRESULT HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) = 0;

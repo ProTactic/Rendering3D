@@ -11,7 +11,7 @@ BOOL Engine::Initialize(std::string windowTitle, std::string windowClass, int wi
 		return false;
 	}
 
-	if (!m_graphics.Initialize()) {
+	if (!m_graphics.Initialize(this->m_baseWindow.GetHwnd(), width, height)) {
 		return false;
 	}
 }
@@ -25,6 +25,9 @@ LRESULT Engine::HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		DestroyWindow(hwnd);
 		m_running = false;
 	}
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
 
 	default:
 		return DefWindowProc(hwnd, uMsg, wParam, lParam);
@@ -33,12 +36,17 @@ LRESULT Engine::HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 void Engine::EngineLoop()
 {
-	while (this->m_running) {
+	while (m_running) {
 		MSG msg = { };
-		if (GetMessage(&msg, NULL, 0, 0))
+		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+		else {
+			m_graphics.Render();
+		}
 	}
+
+
 }

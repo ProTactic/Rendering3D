@@ -98,3 +98,13 @@ BOOL WindowWraper::Initialize(std::string windowTitle, std::string windowClass, 
 	ShowWindow(this->m_baseWindow.GetHwnd(), SW_SHOW);
 	return true;
 }
+
+UINT WindowWraper::getWindowWidth()
+{
+	return this->m_baseWindow.m_width;
+}
+
+UINT WindowWraper::getWindowHeigth()
+{
+	return this->m_baseWindow.m_height;
+}
