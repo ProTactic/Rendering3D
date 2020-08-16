@@ -37,6 +37,7 @@ LRESULT Engine::HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 void Engine::EngineLoop()
 {
 	while (m_running) {
+
 		MSG msg = { };
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{

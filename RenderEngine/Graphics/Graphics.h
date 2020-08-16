@@ -1,11 +1,12 @@
 #pragma once
 
 //Windows
-#include <dxgi1_4.h>
-#include <d3d12.h>
 #pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d3d12.lib")
-#include "d3dx12.h"
+#pragma comment(lib, "d3d11.lib")
+
+
+#include <dxgi.h>
+#include <d3d11.h>
 
 #include<wrl/client.h>
 
@@ -16,31 +17,21 @@ class Graphics
 
 private:
 
-	static const UINT m_frameBuffers = 3;
+	static const UINT m_frameBackBuffers = 1;
 
-	Microsoft::WRL::ComPtr<IDXGIFactory4> m_dxgiFactory;
-	Microsoft::WRL::ComPtr<IDXGIAdapter1> m_dxgiAdapter;
+	Microsoft::WRL::ComPtr<IDXGIFactory> m_dxgiFactory;
 
-	Microsoft::WRL::ComPtr<ID3D12Device> m_D3dDevice;
-	Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_commandQueue;
-	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocatorArr[m_frameBuffers];
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList;
+	Microsoft::WRL::ComPtr<ID3D11Device> m_D3dDevice;
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_ImmediateDeviceContext;
 	
-	Microsoft::WRL::ComPtr<IDXGISwapChain3> m_swapChain;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVdescriptorHeap;
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_renderTargets[m_frameBuffers];
-
-	Microsoft::WRL::ComPtr<ID3D12Fence> m_fencesArr[m_frameBuffers];
-	UINT m_fenceValues[m_frameBuffers];
-	HANDLE m_fenceEvent;
+	Microsoft::WRL::ComPtr<IDXGISwapChain> m_swapChain;
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_renderTargetsView;
 
 
 	void SetDeviceAndHardwareAdapter();
-	void SetCommandsD3D12();
 	void SetSwapChain();
 
 	void UpdatePipeline();
-	void WaitFenceEvent();
 	void CleanUp();
 
 protected:
@@ -48,9 +39,13 @@ protected:
 	UINT m_height;
 	HWND m_hwnd;
 
-	UINT m_frameBufferCurrentIndex;
-
-	UINT rtvDescriptorSize;
+	//tmp
+	float red = 0.0f;
+	float green = 0.0f;
+	float blue = 0.0f;
+	int colormodr = 1;
+	int colormodg = 1;
+	int colormodb = 1;
 
 public:
 	Graphics();
