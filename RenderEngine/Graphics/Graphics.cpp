@@ -31,6 +31,23 @@ bool Graphics::Initialize(HWND hwnd, UINT windowWidth, UINT windowHeight)
 
     m_ImmediateDeviceContext->OMSetRenderTargets(1, m_renderTargetsView.GetAddressOf(), nullptr);
 
+
+   D3D11_VIEWPORT viewport;
+    ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
+
+    viewport.TopLeftX = 0;
+    viewport.TopLeftY = 0;
+    viewport.MinDepth = 0;
+    viewport.MaxDepth = 1;
+    viewport.Width = m_width;
+    viewport.Height = m_height;
+
+    //Set the Viewport
+    m_ImmediateDeviceContext->RSSetViewports(1, &viewport);
+
+    InitShaders();
+    InitSence();
+
 	return true;
 }
 
@@ -94,6 +111,65 @@ void Graphics::SetSwapChain()
     ThrowIfFailed(m_dxgiFactory->CreateSwapChain(m_D3dDevice.Get(), &swapChainDesc, &m_swapChain));
 }
 
+void Graphics::InitShaders()
+{
+    
+    std::wstring shaderfolder = L"";
+#pragma region DetermineShaderPath
+    if (IsDebuggerPresent() == TRUE)
+    {
+#ifdef _DEBUG //Debug Mode
+    #ifdef _WIN64 //x64
+            shaderfolder = L"..\\x64\\Debug\\";
+    #else  //x86 (Win32)
+            shaderfolder = L"..\\Debug\\";
+    #endif
+    #else //Release Mode
+    #ifdef _WIN64 //x64
+            shaderfolder = L"..\\x64\\Release\\";
+    #else  //x86 (Win32)
+            shaderfolder = L"..\\Release\\";
+    #endif
+#endif
+    }
+
+    std::wstring fullPath = shaderfolder + L"VertexShader.cso";
+    ThrowIfFailed(D3DReadFileToBlob(fullPath.c_str(), &m_vertexShaderByteCode));
+    ThrowIfFailed(m_D3dDevice->CreateVertexShader(m_vertexShaderByteCode->GetBufferPointer(), m_vertexShaderByteCode->GetBufferSize(), NULL, &m_vertexShader));
+    
+    fullPath = shaderfolder + L"PixelShader.cso";
+    ThrowIfFailed(D3DReadFileToBlob(fullPath.c_str(), &m_pixelShaderByteCode));
+    ThrowIfFailed(m_D3dDevice->CreatePixelShader(m_pixelShaderByteCode->GetBufferPointer(), m_pixelShaderByteCode->GetBufferSize(), NULL, &m_pixelShader));
+
+    m_D3dDevice->CreateInputLayout(layout, numElements, m_vertexShaderByteCode->GetBufferPointer(), m_vertexShaderByteCode->GetBufferSize(), &m_vertexInputLayout);
+}
+
+void Graphics::InitSence()
+{
+
+    Vertex v[] = {
+        Vertex(-0.5f,-0.5f,1.0f,1.0f,1.0f),     //Bottom Left White Point
+        Vertex(0.0f,0.5f,1.0f,0.0f,0.0f),       //Top Middle Red Point
+        Vertex(0.5f,-0.5f,1.0f,1.0f,1.0f),      //Bottom Right White Point
+    };
+
+
+    D3D11_BUFFER_DESC vertexBufferDesc;
+    ZeroMemory(&vertexBufferDesc, sizeof(D3D11_BUFFER_DESC));
+    vertexBufferDesc.ByteWidth = sizeof(Vertex) * ARRAYSIZE(v);
+    vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    vertexBufferDesc.CPUAccessFlags = 0;
+    vertexBufferDesc.MiscFlags = 0;
+
+    D3D11_SUBRESOURCE_DATA vertexSubResourceDesc;
+    ZeroMemory(&vertexSubResourceDesc, sizeof(D3D11_SUBRESOURCE_DATA));
+    vertexSubResourceDesc.pSysMem = v;
+
+    ThrowIfFailed(m_D3dDevice->CreateBuffer(&vertexBufferDesc, &vertexSubResourceDesc, &m_vertexBuffer));
+
+}
+
 void Graphics::UpdatePipeline()
 {
     red += colormodr * 0.00005f;
@@ -114,10 +190,22 @@ void Graphics::Render()
     UpdatePipeline();
 
     //Clear our backbuffer to the updated color
-    float bgColor[4] = { red, green, blue, 1.0f };
+    //float bgColor[4] = { red, green, blue, 1.0f };
 
+    float bgColor[4] = { red, green, blue, 0.5f };
     m_ImmediateDeviceContext->ClearRenderTargetView(m_renderTargetsView.Get(), bgColor);
 
+    m_ImmediateDeviceContext->IASetInputLayout(m_vertexInputLayout.Get());
+    m_ImmediateDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    m_ImmediateDeviceContext->VSSetShader(m_vertexShader.Get(), NULL, 0);
+    m_ImmediateDeviceContext->PSSetShader(m_pixelShader.Get(), NULL, 0);
+
+    UINT stride = sizeof(Vertex);
+    UINT offset = 0;
+    m_ImmediateDeviceContext->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
+
+    m_ImmediateDeviceContext->Draw(3, 0);
     //Present the backbuffer to the screen
     m_swapChain->Present(0, 0);
 
