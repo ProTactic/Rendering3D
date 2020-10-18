@@ -166,45 +166,67 @@ void Graphics::InitShaders()
 void Graphics::InitSence()
 {
 
+    D3D11_BUFFER_DESC bufferDesc;
+
     Vertex v[] = {
-        Vertex(-0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 1.0f),     //Bottom Left White Point
-        Vertex(-0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f),     //Top Left White Point
-        Vertex(0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 1.0f),       //Top Right Red Point
-        Vertex(0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f),      //Bottom Right White Point
+        Vertex(-1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f),
+        Vertex(-1.0f, +1.0f, -1.0f, 1.0f, 0.0f, 1.0f),
+        Vertex(+1.0f, +1.0f, -1.0f, 0.0f, 1.0f, 1.0f),
+        Vertex(+1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 1.0f),
+        Vertex(-1.0f, -1.0f, +1.0f, 1.0f, 1.0f, 1.0f),
+        Vertex(-1.0f, +1.0f, +1.0f, 1.0f, 1.0f, 1.0f),
+        Vertex(+1.0f, +1.0f, +1.0f, 0.0f, 1.0f, 1.0f),
+        Vertex(+1.0f, -1.0f, +1.0f, 0.0f, 0.0f, 1.0f),
     };
+
 
     DWORD indices[] = {
+        // front face
         0, 1, 2,
         0, 2, 3,
+
+        // back face
+        4, 6, 5,
+        4, 7, 6,
+
+        // left face
+        4, 5, 1,
+        4, 1, 0,
+
+        // right face
+        3, 2, 6,
+        3, 6, 7,
+
+        // top face
+        1, 5, 6,
+        1, 6, 2,
+
+        // bottom face
+        4, 0, 3,
+        4, 3, 7
     };
 
-    D3D11_BUFFER_DESC vertexIndexBufferDesc;
-    ZeroMemory(&vertexIndexBufferDesc, sizeof(D3D11_BUFFER_DESC));
-    vertexIndexBufferDesc.ByteWidth = sizeof(DWORD) * ARRAYSIZE(indices);
-    vertexIndexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    vertexIndexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    vertexIndexBufferDesc.CPUAccessFlags = 0;
-    vertexIndexBufferDesc.MiscFlags = 0;
-
+    ZeroMemory(&bufferDesc, sizeof(D3D11_BUFFER_DESC));
+    bufferDesc.ByteWidth = sizeof(DWORD) * ARRAYSIZE(indices);
+    bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    bufferDesc.CPUAccessFlags = 0;
+    bufferDesc.MiscFlags = 0;
     D3D11_SUBRESOURCE_DATA vertexIndexSubResourceDesc;
     ZeroMemory(&vertexIndexSubResourceDesc, sizeof(D3D11_SUBRESOURCE_DATA));
     vertexIndexSubResourceDesc.pSysMem = indices;
+    ThrowIfFailed(m_D3dDevice->CreateBuffer(&bufferDesc, &vertexIndexSubResourceDesc, &m_vertexIndexBuffer));
 
-    ThrowIfFailed(m_D3dDevice->CreateBuffer(&vertexIndexBufferDesc, &vertexIndexSubResourceDesc, &m_vertexIndexBuffer));
-
-    D3D11_BUFFER_DESC vertexBufferDesc;
-    ZeroMemory(&vertexBufferDesc, sizeof(D3D11_BUFFER_DESC));
-    vertexBufferDesc.ByteWidth = sizeof(Vertex) * ARRAYSIZE(v);
-    vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    vertexBufferDesc.CPUAccessFlags = 0;
-    vertexBufferDesc.MiscFlags = 0;
-
+    ZeroMemory(&bufferDesc, sizeof(D3D11_BUFFER_DESC));
+    bufferDesc.ByteWidth = sizeof(Vertex) * ARRAYSIZE(v);
+    bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bufferDesc.CPUAccessFlags = 0;
+    bufferDesc.MiscFlags = 0;
     D3D11_SUBRESOURCE_DATA vertexSubResourceDesc;
     ZeroMemory(&vertexSubResourceDesc, sizeof(D3D11_SUBRESOURCE_DATA));
     vertexSubResourceDesc.pSysMem = v;
-
-    ThrowIfFailed(m_D3dDevice->CreateBuffer(&vertexBufferDesc, &vertexSubResourceDesc, &m_vertexBuffer));
+    ThrowIfFailed(m_D3dDevice->CreateBuffer(&bufferDesc, &vertexSubResourceDesc, &m_vertexBuffer));
 
     m_ImmediateDeviceContext->IASetInputLayout(m_vertexInputLayout.Get());
     m_ImmediateDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -217,10 +239,40 @@ void Graphics::InitSence()
     m_ImmediateDeviceContext->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
     m_ImmediateDeviceContext->IASetIndexBuffer(m_vertexIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
+    //create the constat buffer
+    ZeroMemory(&bufferDesc, sizeof(D3D11_BUFFER_DESC));
+    bufferDesc.ByteWidth = sizeof(ConstantBufferMatrix);
+    bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    bufferDesc.CPUAccessFlags = 0;
+    bufferDesc.MiscFlags = 0;
+    ThrowIfFailed(m_D3dDevice->CreateBuffer(&bufferDesc, NULL, &m_constantBuffer4x4Matrix));
+
+    camPosition = dx::XMVectorSet(0.0f, 3.0f, -8.0f, 0.0f);
+    camTarget = dx::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+    camUp = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    camView = dx::XMMatrixLookAtLH(camPosition, camTarget, camUp);
+    camProjection = dx::XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)m_width / m_height, 1.0f, 1000.0f);
+
 }
 
 void Graphics::UpdateSence()
 {
+    static float rot = 0.01f;
+    rot += .01f;
+    if (rot > 6.28f)
+        rot = 0.0f;
+
+    World = dx::XMMatrixIdentity();
+
+    //Define cube1's world space matrix
+    dx::XMVECTOR rotaxis = dx::XMVectorSet(1.0f, 1.0f, 0.0f, 0.0f);
+    Rotation = dx::XMMatrixRotationAxis(rotaxis, rot);
+    Translation = dx::XMMatrixTranslation(0.0f, 0.0f, 4.0f);
+
+    //Set cube1's world space using the transformations
+    World = Translation * Rotation;
+
 }
 
 void Graphics::Render()
@@ -229,11 +281,19 @@ void Graphics::Render()
     UpdateSence();
 
     float bgColor[4] = { 0.5f, 0.5f, 0.5f, 0.5f };
+    ConstantBufferMatrix cbm = {};
 
     m_ImmediateDeviceContext->ClearRenderTargetView(m_renderTargetsView.Get(), bgColor);
     m_ImmediateDeviceContext->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-    m_ImmediateDeviceContext->DrawIndexed(6, 0, 0);
+
+    WVP = World * camView * camProjection;
+
+    cbm.matrix = XMMatrixTranspose(WVP);
+    m_ImmediateDeviceContext->UpdateSubresource(m_constantBuffer4x4Matrix.Get(), 0, NULL, &cbm, 0, 0);
+    m_ImmediateDeviceContext->VSSetConstantBuffers(0, 1, m_constantBuffer4x4Matrix.GetAddressOf());
+
+    m_ImmediateDeviceContext->DrawIndexed(36, 0, 0);
     //Present the backbuffer to the screen
     m_swapChain->Present(0, 0);
 

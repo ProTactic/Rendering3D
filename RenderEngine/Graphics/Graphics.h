@@ -9,12 +9,12 @@
 
 #include <dxgi.h>
 #include <d3d11.h>
-#include <DirectXMath.h>
 #include <d3dcompiler.h>
 
 #include<wrl/client.h>
 
 #include "DXUtils.h"
+#include "ConstantBufferTypes.h"
 
 namespace dx = DirectX;
 
@@ -45,9 +45,24 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D11Buffer> m_vertexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> m_vertexIndexBuffer;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> m_constantBuffer4x4Matrix;
+
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> m_vertexInputLayout;
 
+	//
 
+	dx::XMMATRIX WVP;
+	dx::XMMATRIX World;
+	dx::XMMATRIX camView;
+	dx::XMMATRIX camProjection;
+
+	dx::XMVECTOR camPosition;
+	dx::XMVECTOR camTarget;
+	dx::XMVECTOR camUp;
+
+	dx::XMMATRIX Rotation;
+	dx::XMMATRIX Scale;
+	dx::XMMATRIX Translation;
 
 	void SetDeviceAndHardwareAdapter();
 	void SetSwapChain();

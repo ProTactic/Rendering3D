@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BaseWindow.cpp" />
+    <ClCompile Include="Graphics\ConstantBufferTypes.h" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="EngineTimer.cpp" />
     <ClCompile Include="Graphics\Graphics.cpp" />
